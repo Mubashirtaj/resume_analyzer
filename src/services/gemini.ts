@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-// import { ENV } from "../config/env";
+import { ENV } from "../config/env";
 
-const genAI = new GoogleGenerativeAI("AIzaSyAZIki5rowaHUqpFjkwos8oujjHaZLd7iA");
+const genAI = new GoogleGenerativeAI(ENV.GEMINI_API_KEY);
 
 export async function improveCVContent(cvText: string, country: string) {
   const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-pro" });
@@ -19,7 +19,6 @@ ${cvText}
     const response = await result.response;
     const text = response.text();
     return text.trim();
-    //  console.log("Gemini says:", text);
   } catch (error) {
     console.error("Error improving CV:", error);
     throw new Error("Failed to improve CV content");
