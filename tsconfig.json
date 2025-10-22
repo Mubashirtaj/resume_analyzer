@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", // modern JS, better async/await performance
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "declaration": true, // ✅ generate .d.ts for library usage
+    "sourceMap": false, // turn off in prod (use true in dev)
+    "removeComments": true, // ✅ clean buildoutput
+    "noImplicitAny": true, // stricter typing
+    "noUnusedLocals": true, // detect dead code
+    "noUnusedParameters": true, // detect unusedparams
+    "noFallthroughCasesInSwitch": true, // safety in switch
+    "incremental": false // disable incrementalbuilds for CI/CD
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "tests", "**/*.spec.ts"]
+}
