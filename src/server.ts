@@ -6,9 +6,14 @@ const app = express();
 const PORT = ENV.PORT;
 app.use(express.static(path.join(__dirname, "app")));
 app.use("/public", express.static(path.join(__dirname, "./public")));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "app", "index.html"));
+});
+app.get("/create", (req, res) => {
+  res.sendFile(path.join(__dirname, "app", "create.html"));
 });
 app.use("/resume", ResumeApps);
 

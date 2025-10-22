@@ -3,6 +3,8 @@ import { extractTextFromPdf } from "../services/extractword";
 import { improveCVContent } from "../services/gemini";
 import geoip from "geoip-lite";
 import { prisma } from "../config/prisma-client";
+import { Analyzerprompt, AnalyzerpromptWithDesign } from "../utils/geminpromt";
+import { unescapeAiHtml } from "../utils/unescapeHtml";
 
 export async function ResumeSubmit(req: Request, res: Response) {
   try {
@@ -27,11 +29,8 @@ export async function ResumeSubmit(req: Request, res: Response) {
     if (!text || text.trim() === "") {
       res.status(400).json({ message: "Unable to extract text from resume" });
     }
-
-    const aiImprovedText = await improveCVContent(
-      text,
-      `${country} region:${region}`
-    );
+    const prompt = Analyzerprompt(text, `${country} region:${region}`);
+    const aiImprovedText = await improveCVContent(prompt);
 
     const [cvRecord, conversion] = await prisma.$transaction(async (tx) => {
       const cv = await tx.cV.create({
@@ -64,5 +63,71 @@ export async function ResumeSubmit(req: Request, res: Response) {
     res
       .status(500)
       .json({ message: "Internal server error during resume processing" });
+  }
+}
+export async function ResumeGenerate(req: Request, res: Response) {
+  const { cvId, theme, pdfurl } = req.body;
+
+  if (!pdfurl) {
+    return res.status(400).json({ message: "pdfurl is required" });
+  }
+  if (!theme) {
+    return res.status(400).json({ message: "theme is required" });
+  }
+
+  try {
+    const extractedText = await extractTextFromPdf(pdfurl);
+    if (!extractedText || extractedText.trim() === "") {
+      return res
+        .status(400)
+        .json({ message: "Could not extract text from provided PDF" });
+    }
+
+    let ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+    if (Array.isArray(ip)) ip = ip[0];
+    ip = String(ip).replace("::ffff:", "").trim();
+    const geo = geoip.lookup(ip);
+    const country = geo?.country || null;
+    const region = geo?.region || null;
+    const prompt = AnalyzerpromptWithDesign(
+      extractedText,
+      `${country} region:${region}`,
+      theme
+    );
+    const aiHtml = await improveCVContent(prompt);
+    const html = unescapeAiHtml(aiHtml);
+    const finalHtml =
+      html.trim().startsWith("<!doctype") || html.trim().startsWith("<!DOCTYPE")
+        ? html
+        : `<!doctype html>\n${html}`;
+    const result = await prisma.$transaction(async (tx) => {
+      const cvRecord = await tx.cV.findUnique({
+        where: { id: cvId },
+      });
+
+      if (!cvRecord) {
+        throw new Error("CV not found — please upload your resume first.");
+      }
+
+      const conversion = await tx.conversion.create({
+        data: {
+          cvId: cvRecord.id,
+          extractedText,
+          improvedText: finalHtml,
+        },
+      });
+
+      return { cv: cvRecord, conversion };
+    });
+
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+
+    res.end(JSON.stringify({ message: "Success", data: finalHtml }));
+  } catch (error) {
+    console.error(" ResumeGenerate error:", error);
+    res.status(500).json({
+      message: "Internal server error during resume generation",
+      error: (error as Error).message,
+    });
   }
 }
