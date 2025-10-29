@@ -51,3 +51,15 @@ ${cvText}
 End of instructions.`
   );
 }
+export function Getjobprompt(cvText: string) {
+  return `
+You are an expert HR resume analyzer.
+
+Read the following resume text carefully and determine the most likely current or primary job title of the candidate.
+
+Return **only** the job title — no explanations, no extra text.
+
+Resume:
+${cvText}
+`;
+}

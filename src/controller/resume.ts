@@ -3,8 +3,13 @@ import { extractTextFromPdf } from "../services/extractword";
 import { improveCVContent } from "../services/gemini";
 import geoip from "geoip-lite";
 import { prisma } from "../config/prisma-client";
-import { Analyzerprompt, AnalyzerpromptWithDesign } from "../utils/geminpromt";
+import {
+  Analyzerprompt,
+  AnalyzerpromptWithDesign,
+  Getjobprompt,
+} from "../utils/geminpromt";
 import { unescapeAiHtml } from "../utils/unescapeHtml";
+import { fetchJobs } from "../services/jobAggregator";
 
 export async function ResumeSubmit(req: Request, res: Response) {
   try {
@@ -131,3 +136,24 @@ export async function ResumeGenerate(req: Request, res: Response) {
     });
   }
 }
+export const getJobs = async (req: Request, res: Response) => {
+  try {
+    if (!req.file || !req.file.path) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    const page = req.body.page as string;
+    const country = req.body.country as string;
+    console.log(page);
+    const filePath = req.file.path;
+    const text = await extractTextFromPdf(filePath);
+    const prompt = Getjobprompt(text);
+    const field = await improveCVContent(prompt);
+
+    if (!page) return res.status(400).json({ message: "Field is required" });
+
+    const jobs = await fetchJobs(field, page, country);
+    res.json({ count: jobs.length, jobs });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching jobs", error: err });
+  }
+};
