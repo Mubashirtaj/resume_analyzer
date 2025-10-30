@@ -118,6 +118,7 @@ export async function ResumeGenerate(req: Request, res: Response) {
         data: {
           cvId: cvRecord.id,
           extractedText,
+          prompt: theme,
           improvedText: finalHtml,
         },
       });
@@ -134,6 +135,31 @@ export async function ResumeGenerate(req: Request, res: Response) {
       message: "Internal server error during resume generation",
       error: (error as Error).message,
     });
+  }
+}
+export async function Conversation(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+
+    const conversation = await prisma.conversion.findMany({
+      where: { cvId: id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        prompt: true,
+        improvedText: true,
+        createdAt: true,
+      },
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+
+    return res.status(200).json({ conversation });
+  } catch (error) {
+    console.error("Error fetching conversation:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
 export const getJobs = async (req: Request, res: Response) => {

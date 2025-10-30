@@ -2,13 +2,14 @@ import express from "express";
 import { ENV } from "./config/env";
 import ResumeApps from "./route/resume";
 import path from "path";
+import cors from "cors";
 const app = express();
 const PORT = ENV.PORT;
+app.use(cors());
 app.use(express.static(path.join(__dirname, "app")));
 app.use("/public", express.static(path.join(__dirname, "./public")));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "app", "index.html"));
 });
