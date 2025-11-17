@@ -14,14 +14,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  Isverified   Boolean
+  password     String?
+  createdAt    DateTime @default(now())
+  profileimg   String   @default("")
+  provider     String
+  refreshToken String?
+  geminkey     String?
+}
+
 model CV {
-  id           String        @id @default(uuid())
-  pdfUrl       String
-  ipAddress    String?
-  country      String?
-  region       String?
-  uploadedAt   DateTime      @default(now())
-  conversions  Conversion[]  // Relation to Conversion table
+  id            String       @id @default(uuid())
+  pdfUrl        String
+  ipAddress     String?
+  country       String?
+  region        String?
+  extractedText String?
+  improvedText  String?
+  uploadedAt    DateTime     @default(now())
+  conversions   Conversion[] // Relation to Conversion table
 }
 
 model Conversion {
@@ -29,7 +44,7 @@ model Conversion {
   cvId          String
   prompt        String?
   extractedText String?
-  improvedText  String?
+  improvedText  Json?
   createdAt     DateTime @default(now())
 
   cv CV @relation(fields: [cvId], references: [id], onDelete: Cascade)

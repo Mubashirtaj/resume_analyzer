@@ -10,6 +10,7 @@ import {
 } from "../utils/geminpromt";
 import { unescapeAiHtml } from "../utils/unescapeHtml";
 import { fetchJobs } from "../services/jobAggregator";
+import { ok } from "node:assert";
 
 export async function ResumeSubmit(req: Request, res: Response) {
   try {
@@ -37,31 +38,24 @@ export async function ResumeSubmit(req: Request, res: Response) {
     const prompt = Analyzerprompt(text, `${country} region:${region}`);
     const aiImprovedText = await improveCVContent(prompt);
 
-    const [cvRecord, conversion] = await prisma.$transaction(async (tx) => {
+    const [cvRecord] = await prisma.$transaction(async (tx) => {
       const cv = await tx.cV.create({
         data: {
           pdfUrl: filePath,
           ipAddress: ip,
+          improvedText: aiImprovedText,
+          extractedText: text,
           country,
           region,
         },
       });
 
-      const conv = await tx.conversion.create({
-        data: {
-          cvId: cv.id,
-          extractedText: text,
-          improvedText: aiImprovedText || "AI did not return a result",
-        },
-      });
-
-      return [cv, conv];
+      return [cv];
     });
 
     res.status(200).json({
       message: "Resume processed successfully",
       cv: cvRecord,
-      conversion,
     });
   } catch (error) {
     console.error("❌ Error in ResumeSubmit:", error);
@@ -71,18 +65,19 @@ export async function ResumeSubmit(req: Request, res: Response) {
   }
 }
 export async function ResumeGenerate(req: Request, res: Response) {
-  const { cvId, theme, pdfurl } = req.body;
-
-  if (!pdfurl) {
-    return res.status(400).json({ message: "pdfurl is required" });
-  }
+  const { cvId, theme } = req.body;
   if (!theme) {
     return res.status(400).json({ message: "theme is required" });
   }
 
   try {
-    const extractedText = await extractTextFromPdf(pdfurl);
-    if (!extractedText || extractedText.trim() === "") {
+    const extract = await prisma.cV.findUnique({
+      where: { id: cvId },
+      select: { extractedText: true },
+    });
+
+    const extractedText = extract?.extractedText || null;
+    if (!extractedText) {
       return res
         .status(400)
         .json({ message: "Could not extract text from provided PDF" });
@@ -91,20 +86,32 @@ export async function ResumeGenerate(req: Request, res: Response) {
     let ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
     if (Array.isArray(ip)) ip = ip[0];
     ip = String(ip).replace("::ffff:", "").trim();
+
     const geo = geoip.lookup(ip);
     const country = geo?.country || null;
     const region = geo?.region || null;
+
     const prompt = AnalyzerpromptWithDesign(
       extractedText,
       `${country} region:${region}`,
       theme
     );
+
     const aiHtml = await improveCVContent(prompt);
-    const html = unescapeAiHtml(aiHtml);
-    const finalHtml =
-      html.trim().startsWith("<!doctype") || html.trim().startsWith("<!DOCTYPE")
-        ? html
-        : `<!doctype html>\n${html}`;
+
+    let html = aiHtml;
+
+    try {
+      if (typeof html === "string") {
+        // Remove ```json or ``` from response
+        html = html.replace(/```json|```/gi, "").trim();
+
+        html = JSON.parse(html);
+      }
+    } catch (error) {
+      console.error("JSON parse error:", error);
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       const cvRecord = await tx.cV.findUnique({
         where: { id: cvId },
@@ -119,7 +126,7 @@ export async function ResumeGenerate(req: Request, res: Response) {
           cvId: cvRecord.id,
           extractedText,
           prompt: theme,
-          improvedText: finalHtml,
+          improvedText: html, // ✅ RAW JSON stored
         },
       });
 
@@ -128,40 +135,23 @@ export async function ResumeGenerate(req: Request, res: Response) {
 
     res.setHeader("Content-Type", "application/json; charset=utf-8");
 
-    res.end(JSON.stringify({ message: "Success", data: finalHtml }));
+    res.end(
+      JSON.stringify({
+        ok: true,
+        message: "Success",
+        id: result.conversion.id,
+        data: html, // ✅ return JSON not string
+      })
+    );
   } catch (error) {
-    console.error(" ResumeGenerate error:", error);
+    console.error("ResumeGenerate error:", error);
     res.status(500).json({
       message: "Internal server error during resume generation",
       error: (error as Error).message,
     });
   }
 }
-export async function Conversation(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
 
-    const conversation = await prisma.conversion.findMany({
-      where: { cvId: id },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        prompt: true,
-        improvedText: true,
-        createdAt: true,
-      },
-    });
-
-    if (!conversation) {
-      return res.status(404).json({ error: "Conversation not found" });
-    }
-
-    return res.status(200).json({ conversation });
-  } catch (error) {
-    console.error("Error fetching conversation:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-}
 export const getJobs = async (req: Request, res: Response) => {
   try {
     if (!req.file || !req.file.path) {
@@ -183,3 +173,57 @@ export const getJobs = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error fetching jobs", error: err });
   }
 };
+
+export async function Conversation(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+
+    const conversation = await prisma.conversion.findMany({
+      where: { cvId: id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        prompt: true,
+        improvedText: true,
+        createdAt: true,
+      },
+    });
+    const CVTEXT = await prisma.cV.findFirst({
+      where: { id: id },
+      select: {
+        improvedText: true,
+      },
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+
+    return res.status(200).json({ conversation, CVTEXT });
+  } catch (error) {
+    console.error("Error fetching conversation:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
+export async function PDFPreview(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+
+    const conversation = await prisma.conversion.findUnique({
+      where: { id: id },
+      select: {
+        improvedText: true,
+        createdAt: true,
+      },
+    });
+
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+
+    return res.status(200).json({ data: conversation.improvedText });
+  } catch (error) {
+    console.error("Error fetching conversation:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}

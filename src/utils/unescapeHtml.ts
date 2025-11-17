@@ -23,7 +23,8 @@ export function unescapeAiHtml(aiOutput: string) {
 
   s = s.replace(/\\"/g, '"');
 
-  s = s.replace(/^\s*```html\s*/i, "").replace(/\s*```\s*$/i, "");
+  // remove ```html, ```json, and trailing ```
+  s = s.replace(/^\s*```(?:html|json)\s*/i, "").replace(/\s*```\s*$/i, "");
 
   return s.trim();
 }

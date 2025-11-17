@@ -20,6 +20,6 @@
     "noFallthroughCasesInSwitch": true, // safety in switch
     "incremental": false // disable incrementalbuilds for CI/CD
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/types/express.d.ts"],
   "exclude": ["node_modules", "dist", "tests", "**/*.spec.ts"]
 }
