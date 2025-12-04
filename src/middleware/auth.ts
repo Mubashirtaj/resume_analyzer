@@ -20,7 +20,6 @@ export const isAuth = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (!payload) {
     return res.status(401).json({ success: false, message: "Invalid token" });
   }
-
-  req.userId = payload.id;
+  req.user = payload;
   next();
 };

@@ -32,7 +32,7 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL:
-        "https://kinley-paleogenetic-genoveva.ngrok-free.dev/auth/google/callback",
+        "http://localhost:4000/auth/google/callback",
     },
     async (
       _accessToken: string,
@@ -81,7 +81,7 @@ passport.use(
       clientID: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       callbackURL:
-        "https://kinley-paleogenetic-genoveva.ngrok-free.dev/auth/github/callback",
+        "http://localhost:4000/auth/github/callback",
       scope: ["user:email"],
     },
     async (

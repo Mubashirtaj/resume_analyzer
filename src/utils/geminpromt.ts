@@ -100,11 +100,14 @@ You are an expert resume writer and professional UI designer. Your job is to rew
 - Element padding: 6-12px
 - Maximum width for text blocks: 350-400px (for two-column), 700px (for single column)
 
-**Color Usage:**
-- Use ${colorTheme} ONLY for: section headings, name, or subtle accents
-- Body text: #000000 or #1a1a1a (dark gray)
+**Color Usage (STRICT RULES):**
+- Use the provided theme color (${colorTheme}) ONLY for: section headings, name, or subtle accents
+- All colors must be written in **HEX format only** (e.g. #3b82f6, #000000, #10b981)
+- Do NOT use "lab()", "lch()", "oklab()", "oklch()", "rgb()", "rgba()", "hsl()", or named colors like "blue"
+- Body text: #1a1a1a or #000000
 - Secondary text (dates, locations): #666666 or #888888
-- Backgrounds: Use subtle colors or transparent
+- Backgrounds: Use #ffffff, #f9fafb, or transparent only
+
 
 📐 LAYOUT STRUCTURE (800px × 1200px canvas):
 
@@ -221,14 +224,9 @@ ${
 ❌ Text extending beyond canvas (x + width must be ≤ 800, y + height must be ≤ 1200)
 ❌ Too much bold text (only headings and job titles)
 ❌ Inconsistent spacing between sections
-❌ Using LAB colors (use hex like #3b82f6 instead)
+❌ Using LAB, LCH, OKLCH, OKLAB, or RGB/HSL color functions — ALWAYS use HEX codes like #3b82f6, #000000, #10b981
 
-🎨 COLOR PALETTE SUGGESTIONS:
-- Modern Blue: #3b82f6, #2563eb
-- Professional Green: #10b981, #059669
-- Corporate Gray: #64748b, #475569
-- Creative Purple: #8b5cf6, #7c3aed
-- Classic Black: #000000, #1a1a1a
+
 
 📄 SOURCE RESUME TO ANALYZE:
 """

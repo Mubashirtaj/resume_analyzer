@@ -19,10 +19,11 @@ dotenv.config();
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://192.168.100.16:3000", // frontend URL
+    origin: ["http://localhost:3000", "http://192.168.100.16:3000"], // frontend URLs
     credentials: true, // allow cookies
   })
 );
+
 
 app.use(express.static(path.join(__dirname, "app")));
 app.use("/public", express.static(path.join(__dirname, "./public")));
@@ -35,33 +36,37 @@ app.get("/create", (req, res) => {
   res.sendFile(path.join(__dirname, "app", "create.html"));
 });
 app.use("/resume", isAuth, ResumeApps);
-// app.use(
-//   session({
-//     secret: process.env.COOKIE_SECRET!,
-//     resave: false,
-//     saveUninitialized: false,
-//     cookie: { maxAge: 24 * 60 * 60 * 1000 },
-//   })
-// );
-// app.use(passport.initialize());
-// app.use(passport.session());
+app.use(
+  session({
+    secret: process.env.COOKIE_SECRET!,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 24 * 60 * 60 * 1000 },
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use("/", ResumeOauth);
 app.use("/", router);
-app.get("/me", (req, res) => {
+app.get("/me",isAuth, (req, res) => {
   res.json(req.user);
 });
 
 // Logout
-app.get("/logout", (req, res) => {
+app.post("/logout", (req, res) => {
+  res.clearCookie("jid", {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+  });
+
   req.logout(() => {});
   res.send("Logged Out");
 });
-app.get("/test-cookie", (req, res) => {
-  res.send("Cookie set");
-});
+
 
 app.use(cookieParser());
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, () => {
   console.log(`your server is successfully run at port ${PORT}`);
 });

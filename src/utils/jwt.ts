@@ -37,10 +37,24 @@ function decrypt(text: string) {
 
 // 🔐 Create encrypted access token
 export function createAccessToken(payload: object) {
+
+  
   const encrypted = encrypt(JSON.stringify(payload));
   return jwt.sign({ data: encrypted }, ACCESS_TOKEN_SECRET, {
-    expiresIn: "15m",
+    expiresIn: "1d",
   });
+}
+// 🔍 Verify & decrypt access token
+export function verifyAccessToken(token: string) {
+  try {
+    const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET) as any;
+    const decrypted = decrypt(decoded.data);
+    console.log(decrypted);
+    
+    return JSON.parse(decrypted);
+  } catch {
+    return null;
+  }
 }
 
 // 🔐 Create encrypted refresh token
@@ -51,16 +65,6 @@ export function createRefreshToken(payload: object) {
   });
 }
 
-// 🔍 Verify & decrypt access token
-export function verifyAccessToken(token: string) {
-  try {
-    const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET) as any;
-    const decrypted = decrypt(decoded.data);
-    return JSON.parse(decrypted);
-  } catch {
-    return null;
-  }
-}
 
 // 🔍 Verify & decrypt refresh token
 export function verifyRefreshToken(token: string) {

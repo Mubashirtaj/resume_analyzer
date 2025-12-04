@@ -21,15 +21,20 @@ model User {
   Isverified   Boolean
   password     String?
   createdAt    DateTime @default(now())
-  profileimg   String   @default("")
+  profileimg   String   @default("/defaultimage.png")
   provider     String
   refreshToken String?
+  OTP          Int?
   geminkey     String?
+  geminimodel  String   @default("models/gemini-2.5-pro")
+  credits      Int   @default(3)
+  cVs          CV[]     // Relation back to CV
 }
 
 model CV {
   id            String       @id @default(uuid())
   pdfUrl        String
+  userID        String
   ipAddress     String?
   country       String?
   region        String?
@@ -37,11 +42,14 @@ model CV {
   improvedText  String?
   uploadedAt    DateTime     @default(now())
   conversions   Conversion[] // Relation to Conversion table
+
+  user          User         @relation(fields: [userID], references: [id])
 }
 
 model Conversion {
   id            String   @id @default(uuid())
   cvId          String
+  userID        String   @default("123")
   prompt        String?
   extractedText String?
   improvedText  Json?

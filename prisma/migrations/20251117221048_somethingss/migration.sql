@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "CV" ADD COLUMN     "userID" TEXT NOT NULL DEFAULT '123';
+
+-- AlterTable
+ALTER TABLE "Conversion" ADD COLUMN     "userID" TEXT NOT NULL DEFAULT '123';

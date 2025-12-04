@@ -1,10 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ENV } from "../config/env";
+let apikey:string = "";
+const genAI = new GoogleGenerativeAI(apikey || ENV.GEMINI_API_KEY);
 
-const genAI = new GoogleGenerativeAI(ENV.GEMINI_API_KEY);
-
-export async function improveCVContent(prompt: string) {
-  const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-pro" });
+export async function improveCVContent(prompt: string,key:string,Gemin_Model:string) {
+  apikey = key 
+  const model = genAI.getGenerativeModel({ model: Gemin_Model });
 
   try {
     const result = await model.generateContent(prompt);
