@@ -33,7 +33,7 @@ ResumeOauth.get(
     res.cookie("jid", refreshToken, {
       httpOnly: true,
       path: "/",
-      sameSite: "lax",
+      sameSite: "none",
       secure: false,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -63,14 +63,14 @@ ResumeOauth.get(
     res.cookie("jid", user.refreshToken, {
       httpOnly: true,
       path: "/refresh_token",
-      sameSite: "lax",
+      sameSite: "none",
       secure: false,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.cookie("atk", user.accessToken, {
       httpOnly: false,
-      sameSite: "lax",
+      sameSite: "none",
       secure: false,
       maxAge: 15 * 60 * 1000,
     });
@@ -170,7 +170,7 @@ ResumeOauth.post("/auth/signin", async (req, res) => {
     res.cookie("jid", refreshToken, {
       httpOnly: true,
       secure: false, // ✅ because ngrok is HTTPS
-      sameSite: "lax", // ✅ allows cookies across origins
+      sameSite: "none", // ✅ allows cookies across origins
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -332,7 +332,7 @@ const accessToken = createAccessToken({
        res.cookie("jid", refreshToken, {
       httpOnly: true,
       secure: false, 
-      sameSite: "lax", 
+      sameSite: "none", 
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });

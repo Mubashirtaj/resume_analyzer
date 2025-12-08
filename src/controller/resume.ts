@@ -33,7 +33,6 @@ export async function ResumeSubmit(req: Request, res: Response) {
     const prompt = Analyzerprompt(text, `${country} region:${region}`);
     let aiImprovedText: string;
 
-    // --- Prisma transaction: get user + optionally decrement credits ---
     const cvRecord = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({
         where: { id: req.user!.id },
@@ -77,7 +76,6 @@ export async function ResumeSubmit(req: Request, res: Response) {
       },
     });
 
-    // --- Delete the uploaded PDF after saving to DB ---
     try {
       await fs.unlink(filePath);
       console.log(`🗑️ Deleted uploaded file: ${filePath}`);
@@ -191,7 +189,7 @@ export const getJobs = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    filePath = req.file.path;  // store for deletion later
+    filePath = req.file.path;  
 
     const page = req.body.page as number;
     const country = req.body.country as string;
@@ -257,7 +255,7 @@ export const getJobs = async (req: Request, res: Response) => {
     }
     return res.status(500).json({ message: "Error fetching jobs", error: err.message || err });
   } finally {
-    // ✅ DELETE FILE (always runs)
+   
     if (filePath) {
       try {
         await fs.unlink(filePath);
@@ -379,7 +377,7 @@ export async function ResumeUpdate(req: Request, res: Response) {
     const updatedConversation = await prisma.conversion.update({
       where: { id },
       data: {
-        improvedText: data,      // <-- resumeData store
+        improvedText: data,     
       },
       select: {
         id: true,
