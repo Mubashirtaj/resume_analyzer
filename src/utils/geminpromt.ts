@@ -67,7 +67,7 @@ ${cvText}
 // }
 export function AnalyzerpromptWithDesign(
   cvText: string,
-  country: string,
+  _country: string,
   colorTheme: string,
   fontPreference: string = "Arial, sans-serif",
   layoutStyle: string = "two-column",

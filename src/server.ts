@@ -3,12 +3,10 @@ import { ENV } from "./config/env";
 import ResumeApps from "./route/resume";
 import path from "path";
 import cors from "cors";
-import cookieSession from "cookie-session";
 const app = express();
 const PORT = ENV.PORT;
 import dotenv from "dotenv";
-import "./passport/google"; // Google strategy attach hoti hai
-import "./passport/github";
+import "./passport/index";
 import session from "express-session";
 import passport from "./passport/index";
 import ResumeOauth from "./route/Oauth";
@@ -17,10 +15,11 @@ import { isAuth } from "./middleware/auth";
 import router from "./route/auth";
 dotenv.config();
 app.use(cookieParser());
+const Frontend_Url:string =  process.env.Frontend_Url || ""
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://192.168.100.16:3000"], // frontend URLs
-    credentials: true, // allow cookies
+    origin: ["http://localhost:3000", Frontend_Url], 
+    credentials: true,
   })
 );
 
@@ -29,10 +28,10 @@ app.use(express.static(path.join(__dirname, "app")));
 app.use("/public", express.static(path.join(__dirname, "./public")));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.sendFile(path.join(__dirname, "app", "index.html"));
 });
-app.get("/create", (req, res) => {
+app.get("/create", (_req, res) => {
   res.sendFile(path.join(__dirname, "app", "create.html"));
 });
 app.use("/resume", isAuth, ResumeApps);
@@ -53,7 +52,6 @@ app.get("/me",isAuth, (req, res) => {
   res.json(req.user);
 });
 
-// Logout
 app.post("/logout", (req, res) => {
   res.clearCookie("jid", {
     httpOnly: true,

@@ -1,12 +1,10 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { TokenPayload } from "../types/express";
 
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET!;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
 const ENC_SECRET = process.env.ENC_SECRET! || "Mubi";
 
-// 🔐 Encrypt
 function encrypt(text: string) {
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(
@@ -19,7 +17,6 @@ function encrypt(text: string) {
   return iv.toString("hex") + ":" + encrypted.toString("hex");
 }
 
-// 🔓 Decrypt
 function decrypt(text: string) {
   const [ivHex, encryptedHex] = text.split(":");
   const iv = Buffer.from(ivHex, "hex");
@@ -35,7 +32,6 @@ function decrypt(text: string) {
   return decrypted.toString();
 }
 
-// 🔐 Create encrypted access token
 export function createAccessToken(payload: object) {
 
   
@@ -44,12 +40,11 @@ export function createAccessToken(payload: object) {
     expiresIn: "1d",
   });
 }
-// 🔍 Verify & decrypt access token
 export function verifyAccessToken(token: string) {
   try {
     const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET) as any;
     const decrypted = decrypt(decoded.data);
-    console.log(decrypted);
+   
     
     return JSON.parse(decrypted);
   } catch {
@@ -57,16 +52,12 @@ export function verifyAccessToken(token: string) {
   }
 }
 
-// 🔐 Create encrypted refresh token
 export function createRefreshToken(payload: object) {
   const encrypted = encrypt(JSON.stringify(payload));
   return jwt.sign({ data: encrypted }, REFRESH_TOKEN_SECRET, {
     expiresIn: "7d",
   });
 }
-
-
-// 🔍 Verify & decrypt refresh token
 export function verifyRefreshToken(token: string) {
   try {
     const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET) as any;

@@ -39,7 +39,7 @@ ResumeOauth.get(
     });
 
     return res.redirect(
-      `http://localhost:3000/authcheck?accessToken=${accessToken}`
+      `${process.env.Frontend_Url}/authcheck?accessToken=${accessToken}`
     );
   }
 );
@@ -76,7 +76,7 @@ ResumeOauth.get(
     });
 
     return res.redirect(
-      `http://localhost:3000/authcheck?accessToken=${user.accessToken}&refreshToken=${user.refreshToken}`
+      `${process.env.Frontend_Url}/authcheck?accessToken=${user.accessToken}&refreshToken=${user.refreshToken}`
     );
   }
 );
@@ -89,7 +89,6 @@ ResumeOauth.post("/auth/signup", async (req, res) => {
 
   const hash = await bcrypt.hash(password, 10);
 
-  // Generate Random 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000);
 
   const result = await prisma.$transaction(async (tx) => {
@@ -111,11 +110,9 @@ ResumeOauth.post("/auth/signup", async (req, res) => {
       },
     });
 
-    console.log("New User Created:", newUser);
     return { success: true, user: newUser };
   });
 
-  console.log("Transaction Result:", result);
 
   if (!result.success) {
     return res.json({ success: false, message: result.message });
@@ -197,7 +194,7 @@ ResumeOauth.post("/auth/signin", async (req, res) => {
 });
 
 ResumeOauth.post("/user/update-profile", isAuth, async (req: AuthRequest, res) => {
-  console.log("recieved");
+
   
   try {
     if (!req.user?.id) {
@@ -206,7 +203,6 @@ ResumeOauth.post("/user/update-profile", isAuth, async (req: AuthRequest, res) =
 
     const { name, geminiKey,   geminiModel, password, provider } = req.body;
 
-    // Validation
     const errors = [];
 
     if (!name || name.trim().length === 0) {
@@ -233,7 +229,6 @@ ResumeOauth.post("/user/update-profile", isAuth, async (req: AuthRequest, res) =
       });
     }
 
-    // Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { id: req.user?.id },
     });
@@ -245,7 +240,6 @@ ResumeOauth.post("/user/update-profile", isAuth, async (req: AuthRequest, res) =
       });
     }
 
-    // Prepare update data
     const updateData = {
       name: name.trim(),
       ...(geminiKey !== undefined && { 
@@ -255,15 +249,11 @@ ResumeOauth.post("/user/update-profile", isAuth, async (req: AuthRequest, res) =
       ...(provider && { provider }),
     };
 
-    // Handle password update
     if (password && password !== 'Change Password' && password !== '••••••••••') {
-      // In a real application, you should hash the password
-      // const bcrypt = require('bcrypt');
-      // const hashedPassword = await bcrypt.hash(password, 12);
-      updateData.password = password; // Replace with hashed password in production
+      
+      updateData.password = password; 
     }
 
-    // Update user
     const updatedUser = await prisma.user.update({
       where: { id: req.user?.id },
       data: updateData,
@@ -328,7 +318,6 @@ ResumeOauth.post("/auth/verify", async (req, res) => {
       return res.json({ success: false, message: "Invalid OTP" });
     }
 
-    // Update user as verified
     await prisma.user.update({
       where: { id },
       data: { Isverified: true, OTP: null },
@@ -342,8 +331,8 @@ const accessToken = createAccessToken({
     const refreshToken = createRefreshToken({ id: user.id });
        res.cookie("jid", refreshToken, {
       httpOnly: true,
-      secure: false, // ✅ because ngrok is HTTPS
-      sameSite: "lax", // ✅ allows cookies across origins
+      secure: false, 
+      sameSite: "lax", 
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -375,10 +364,8 @@ ResumeOauth.post("/auth/resend-otp", async (req, res) => {
       return res.json({ success: false, message: "User already verified" });
     }
 
-    // Generate new OTP
     const newOtp = Math.floor(100000 + Math.random() * 900000);
 
-    // Update OTP
     await prisma.user.update({
       where: { id },
       data: { OTP: newOtp },

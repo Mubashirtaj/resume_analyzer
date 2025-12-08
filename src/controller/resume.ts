@@ -370,7 +370,7 @@ export async function AllChats(req: Request, res: Response) {
 export async function ResumeUpdate(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { data, updatedAt } = req.body;
+    const { data } = req.body;
 
     if (!data) {
       return res.status(400).json({ error: "data is required" });

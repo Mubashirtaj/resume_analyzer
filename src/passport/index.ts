@@ -32,7 +32,7 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL:
-        "http://localhost:4000/auth/google/callback",
+         `${process.env.Backend_Url}/auth/google/callback`,
     },
     async (
       _accessToken: string,
@@ -81,7 +81,7 @@ passport.use(
       clientID: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       callbackURL:
-        "http://localhost:4000/auth/github/callback",
+        `${process.env.Backend_Url}/auth/github/callback`,
       scope: ["user:email"],
     },
     async (
