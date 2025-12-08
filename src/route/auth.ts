@@ -9,9 +9,8 @@ import { prisma } from "../config/prisma-client";
 const router: Router = express.Router();
 
 router.post("/auth/refresh_token", async (req, res) => {
-  const token = req.cookies?.jid; // refresh token stored in httpOnly cookie
-  console.log("refresh " + token);
-
+  const token = req.cookies?.jid;
+ 
   if (!token) return res.send({ok:true, success: false, accessToken: "" });
 
   const payload: any = verifyRefreshToken(token);
@@ -29,10 +28,14 @@ router.post("/auth/refresh_token", async (req, res) => {
     data: { refreshToken: newRefreshToken },
   });
 
-  res.cookie("jid", newRefreshToken, {
-    httpOnly: true,
-    path: "/",
-  });
+    res.cookie("jid", newRefreshToken, {
+      httpOnly: true,
+      secure: true, // ✅ because ngrok is HTTPS
+      sameSite: "none", // ✅ allows cookies across origins
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+   
 
   res.send({ok:true, success: true, accessToken: newAccessToken });
 });

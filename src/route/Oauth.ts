@@ -34,7 +34,7 @@ ResumeOauth.get(
       httpOnly: true,
       path: "/",
       sameSite: "none",
-      secure: false,
+      secure: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -64,7 +64,7 @@ ResumeOauth.get(
       httpOnly: true,
       path: "/refresh_token",
       sameSite: "none",
-      secure: false,
+      secure: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -169,7 +169,7 @@ ResumeOauth.post("/auth/signin", async (req, res) => {
 
     res.cookie("jid", refreshToken, {
       httpOnly: true,
-      secure: false, // ✅ because ngrok is HTTPS
+      secure: true, // ✅ because ngrok is HTTPS
       sameSite: "none", // ✅ allows cookies across origins
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -331,7 +331,7 @@ const accessToken = createAccessToken({
     const refreshToken = createRefreshToken({ id: user.id });
        res.cookie("jid", refreshToken, {
       httpOnly: true,
-      secure: false, 
+      secure: true, 
       sameSite: "none", 
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
